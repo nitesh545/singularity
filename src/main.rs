@@ -96,13 +96,44 @@ fn spawn_objects(
     }
 }
 
-// TODO: implement a logic for pulling planet towards center of blackhole
-fn detect_collisions(q_colliding_entities: Query<(Entity, &CollidingEntities)>) {
-    for (entity, colliding_entities) in &q_colliding_entities {
-        println!(
-            "entity : {}, colliding_entities: {:?}",
-            entity, colliding_entities
-        );
+fn detect_collisions(
+    mut q_colliding_entities: Query<(Entity, &CollidingEntities, &mut LinearVelocity)>,
+    q_player: Query<Entity, With<Player>>,
+    q_object: Query<Entity, With<Object>>,
+    q_transform: Query<&Transform>,
+) {
+    let players: Vec<Entity> = q_player.iter().collect();
+    let objects: Vec<Entity> = q_object.iter().collect();
+    for (entity, colliding_entities, mut velocity) in q_colliding_entities.iter_mut() {
+        let coll_entis = colliding_entities.iter().collect::<Vec<_>>();
+        for ent in coll_entis {
+            if objects.contains(&entity) && players.contains(ent) {
+                let player_transform = q_transform.get(entity).unwrap();
+                let object_transform = q_transform.get(*ent).unwrap();
+                let player_pos = player_transform.translation;
+                let object_pos = object_transform.translation;
+                let dir = (object_pos - player_pos).normalize();
+                let x = dir.x * 10.;
+                let y = dir.y * 10.;
+                velocity.x = x;
+                velocity.y = y;
+            }
+        }
+    }
+}
+
+fn consume_planets(
+    q_objects: Query<(Entity, &Transform), With<Object>>,
+    q_player: Query<&Transform, With<Player>>,
+    mut commands: Commands,
+) {
+    let player_transform = q_player.single().unwrap();
+    for (object, object_transform) in q_objects {
+        if (player_transform.translation.x - object_transform.translation.x).abs() <= 25.0
+            && (player_transform.translation.y - object_transform.translation.y).abs() <= 25.0
+        {
+            commands.entity(object.entity()).despawn();
+        }
     }
 }
 
@@ -161,5 +192,6 @@ fn main() {
         .add_systems(Update, spawn_objects)
         .add_systems(Update, detect_collisions)
         .add_systems(Update, quit_game)
+        .add_systems(Update, consume_planets)
         .run();
 }
