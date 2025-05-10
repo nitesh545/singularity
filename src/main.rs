@@ -4,7 +4,7 @@ use bevy::prelude::*;
 #[allow(unused_imports)]
 use avian2d::prelude::*;
 
-use bevy::window::{CursorGrabMode, PrimaryWindow, WindowMode};
+use bevy::window::{PrimaryWindow, WindowMode};
 #[allow(unused_imports)]
 use rand::prelude::*;
 
@@ -140,7 +140,6 @@ fn consume_planets(
 fn hide_and_lock_cursor(mut q_window: Query<&mut Window, With<PrimaryWindow>>) {
     let mut window = q_window.single_mut().unwrap();
     window.cursor_options.visible = false;
-    window.cursor_options.grab_mode = CursorGrabMode::Locked;
 }
 
 fn quit_game(keys: Res<ButtonInput<KeyCode>>, mut exit: EventWriter<AppExit>) {
@@ -177,7 +176,7 @@ fn main() {
             ..Default::default()
         }))
         .add_plugins(PhysicsPlugins::default())
-        .add_plugins(PhysicsDebugPlugin::default())
+        //.add_plugins(PhysicsDebugPlugin::default())
         .insert_resource(Gravity(Vec2::splat(0.)))
         .insert_resource(ObjectSpawnTimer(Timer::from_seconds(
             5.0,
